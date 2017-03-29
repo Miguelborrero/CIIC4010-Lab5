@@ -1,9 +1,11 @@
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Insets;
+import java.util.ArrayList;
 import java.util.Random;
 
 import javax.swing.JPanel;
+import javax.tools.DocumentationTool.Location;
 
 public class MyPanel extends JPanel {
 	private static final long serialVersionUID = 3426940946811133635L;
@@ -12,6 +14,8 @@ public class MyPanel extends JPanel {
 	private static final int INNER_CELL_SIZE = 29;
 	private static final int TOTAL_COLUMNS = 10;
 	private static final int TOTAL_ROWS = 11;   //Last row has only one cell
+	private CellContent layout[][];
+	private int BombNumber;
 	public int x = -1;
 	public int y = -1;
 	public int mouseDownGridX = 0;
@@ -46,8 +50,8 @@ public class MyPanel extends JPanel {
 		Insets myInsets = getInsets();
 		int x1 = myInsets.left;
 		int y1 = myInsets.top;
-		int x2 = getWidth() - myInsets.right - 1;
-		int y2 = getHeight() - myInsets.bottom - 1;
+		int x2 = getWidth() - myInsets.right - 2;
+		int y2 = getHeight() - myInsets.bottom - 2;
 		int width = x2 - x1;
 		int height = y2 - y1;
 
@@ -64,9 +68,6 @@ public class MyPanel extends JPanel {
 		for (int x = 0; x <= TOTAL_COLUMNS; x++) {
 			g.drawLine(x1 + GRID_X + (x * (INNER_CELL_SIZE + 1)), y1 + GRID_Y, x1 + GRID_X + (x * (INNER_CELL_SIZE + 1)), y1 + GRID_Y + ((INNER_CELL_SIZE + 1) * (TOTAL_ROWS - 1)));
 		}
-
-		//Draw an additional cell at the bottom left
-		g.drawRect(x1 + GRID_X, y1 + GRID_Y + ((INNER_CELL_SIZE + 1) * (TOTAL_ROWS - 1)), INNER_CELL_SIZE + 1, INNER_CELL_SIZE + 1);
 
 		//Paint cell colors
 		for (int x = 0; x < TOTAL_COLUMNS; x++) {
@@ -121,12 +122,107 @@ public class MyPanel extends JPanel {
 		}
 		x = x / (INNER_CELL_SIZE + 1);
 		y = y / (INNER_CELL_SIZE + 1);
-		if (x == 0 && y == TOTAL_ROWS - 1) {    //The lower left extra cell
-			return y;
-		}
+	
 		if (x < 0 || x > TOTAL_COLUMNS - 1 || y < 0 || y > TOTAL_ROWS - 2) {   //Outside the rest of the grid
 			return -1;
 		}
 		return y;
 	}
+
+public void setBombNumber(int newBombNumber){
+	BombNumber = newBombNumber;
+}
+
+
+public int getBombNumber(){
+	return BombNumber;
+}
+
+
+public int getRows(){
+	return layout.length;
+}
+
+public int getCols(){
+	return layout[0].length;
+}
+
+public boolean isInBounds(int x, int y){
+	boolean inBounds = true;
+	if(x >= layout.length || y >= layout[0].length){
+		inBounds = false;
+	}
+	else if(x < 0 || y < 0){
+		inBounds = false;
+	}
+	return inBounds;
+}
+
+
+public void setDimensions(int newLength, int newWidth){
+	layout = new CellContent[newLength][newWidth];
+}
+
+public CellContent getCell(int row, int col){
+	return layout[row][col];
+}
+
+
+public void setCell(int x, int y, int value){
+	if(!isInBounds(x,y)){
+		System.out.println(x + "," + y + " is not a coordinate");
+		return;
+	}
+	layout[x][y] = new CellContent(value);
+}
+
+
+public Integer getCellValue(int x, int y){
+	if(!isInBounds(x,y)){
+		System.out.println(x + "," + y + " is not a coordinate");
+		return null;
+	}
+	Integer value = layout[x][y].getValue();
+	return value;
+}
+
+
+public Integer getSurroundingBombs(int x, int y){
+	Integer neighbors = 0;
+	if(!isInBounds(x,y)){
+		System.out.println(x + "," + y + " is not a coordinate");
+		return null;
+	}
+	for(int i = x-1; i <= x + 1; i++){
+		for(int j = y-1; j<= y + 1; j++){
+			if(isInBounds(i, j)){
+				if(layout[i][j].getBombPlacement()){
+					neighbors ++;
+				}
+			}
+		}
+	}
+	return neighbors;
+}
+
+
+
+
+
+public void setOthers(){
+	for(int i = 0; i < layout.length; i ++){
+		for(int j = 0; j < layout[0].length; j++){
+			layout[i][j].setValue(getNumber(i,j));
+		}
+	}
+}
+
+
+public int getNumber(int row, int col){
+	if(layout[row][col].getBombPlacement()){
+		return 9;
+	}
+	return getSurroundingBombs(row,col);
+}
+
 }
